@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
 import "../src/Wallet.sol";
-import {MockERC20} from "./MockERC20.sol";
+import "./MockERC20.sol";
 
 contract MirageWalletTest is Test {
     MirageWallet wallet;
@@ -193,31 +193,31 @@ contract MirageWalletTest is Test {
         assertEq(mockToken1.balanceOf(owner), initialTokenBalance);
     }
 
-    function testFailRecoverERC20NoTokens() public {
+    function test_RevertWhen_RecoverERC20NoTokens() public {
         // Create a new token with no balance in the wallet
         MockERC20 emptyToken = new MockERC20("Empty Token", "EMPTY");
 
         vm.prank(owner);
+        vm.expectRevert("No tokens to recover");
         wallet.recoverERC20(address(emptyToken));
-        // This should revert with "No tokens to recover"
     }
 
-    function testFailAddInvalidToken() public {
+    function test_RevertWhen_AddInvalidToken() public {
         address[] memory tokens = new address[](1);
         tokens[0] = address(0); // Invalid zero address
 
         vm.prank(owner);
+        vm.expectRevert("Invalid token address");
         wallet.addSupportedTokens(tokens);
-        // This should revert with "Invalid token address"
     }
 
-    function testFailRemoveUnsupportedToken() public {
+    function test_RevertWhen_RemoveUnsupportedToken() public {
         vm.prank(owner);
+        vm.expectRevert("Token not supported");
         wallet.removeSupportedToken(address(mockToken1));
-        // This should revert with "Token not supported"
     }
 
-    function testFailBatchWithdrawMismatchedArrays() public {
+    function test_RevertWhen_BatchWithdrawMismatchedArrays() public {
         address[] memory tokens = new address[](2);
         tokens[0] = address(mockToken1);
         tokens[1] = address(mockToken2);
@@ -226,35 +226,35 @@ contract MirageWalletTest is Test {
         amounts[0] = 50 ether;
 
         vm.prank(owner);
+        vm.expectRevert("Arrays length mismatch");
         wallet.batchWithdrawTokens(tokens, amounts, recipient);
-        // This should revert with "Arrays length mismatch"
     }
 
-    function testFailWithdrawInsufficientFunds() public {
+    function test_RevertWhen_WithdrawInsufficientFunds() public {
         vm.deal(address(wallet), 0.5 ether);
 
         vm.prank(owner);
+        vm.expectRevert("Insufficient funds");
         wallet.withdraw(1 ether, payable(recipient));
-        // This should revert with "Insufficient funds"
     }
 
-    function testFailWithdrawTokenInsufficientBalance() public {
+    function test_RevertWhen_WithdrawTokenInsufficientBalance() public {
         vm.prank(owner);
+        vm.expectRevert("Insufficient token balance");
         wallet.withdrawToken(address(mockToken1), 2000 ether, recipient);
-        // This should revert with "Insufficient token balance"
     }
 
-    function testFailWithdrawToZeroAddress() public {
+    function test_RevertWhen_WithdrawToZeroAddress() public {
         vm.deal(address(wallet), 1 ether);
 
         vm.prank(owner);
+        vm.expectRevert("Invalid recipient");
         wallet.withdraw(0.5 ether, payable(address(0)));
-        // This should revert with "Invalid recipient"
     }
 
-    function testFailWithdrawTokenToZeroAddress() public {
+    function test_RevertWhen_WithdrawTokenToZeroAddress() public {
         vm.prank(owner);
+        vm.expectRevert("Invalid recipient");
         wallet.withdrawToken(address(mockToken1), 100 ether, address(0));
-        // This should revert with "Invalid recipient"
     }
 }
